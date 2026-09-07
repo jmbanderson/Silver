@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<title>Silver Price</title>
+<style>
+  :root {
+    --bg: #F3F1EB;
+    --card: #FFFFFF;
+    --ink: #2B2E2A;
+    --muted: #7A7D74;
+    --line: #E4E1D7;
+    --accent: #6B6558;
+    --silver: #8A8D91;
+  }
+
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+  html, body {
+    margin: 0;
+    height: 100%;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  }
+
+  body {
+    display: flex;
+    justify-content: center;
+    padding: 0;
+  }
+
+  .app {
+    width: 100%;
+    max-width: 480px;
+    min-height: 100vh;
+    background: var(--card);
+    display: flex;
+    flex-direction: column;
+  }
+
+  header {
+    padding: 32px 24px 20px;
+    border-bottom: 1px solid var(--line);
+  }
+
+  header h1 {
+    margin: 0;
+    font-size: 26px;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+  }
+
+  header p {
+    margin: 6px 0 0;
+    color: var(--muted);
+    font-size: 14px;
+  }
+
+  main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 32px 24px;
+    text-align: center;
+  }
+
+  .price-label {
+    font-size: 14px;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    margin-bottom: 8px;
+  }
+
+  .price {
+    font-size: 56px;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    color: var(--ink);
+  }
+
+  .price .unit {
+    font-size: 16px;
+    font-weight: 500;
+    color: var(--muted);
+    display: block;
+    margin-top: 4px;
+  }
+
+  .updated {
+    margin-top: 20px;
+    font-size: 13px;
+    color: var(--muted);
+  }
+
+  .error {
+    color: #B3452C;
+    font-size: 14px;
+    margin-top: 16px;
+  }
+
+  button.refresh {
+    border: none;
+    background: var(--ink);
+    color: white;
+    font-size: 15px;
+    font-weight: 600;
+    padding: 12px 28px;
+    border-radius: 10px;
+    cursor: pointer;
+    margin-top: 28px;
+  }
+
+  button.refresh:active { transform: scale(0.97); }
+  button.refresh:disabled { opacity: 0.5; }
+
+  footer {
+    padding: 14px 24px 24px;
+    color: var(--muted);
+    font-size: 12px;
+    text-align: center;
+  }
+</style>
+</head>
+<body>
+
+<div class="app">
+  <header>
+    <h1>Silver Spot Price</h1>
+    <p>Live price per troy ounce, in USD</p>
+  </header>
+
+  <main>
+    <div class="price-label">Silver (XAG/USD)</div>
+    <div class="price" id="price">
+      &ndash;
+      <span class="unit">per troy oz</span>
+    </div>
+    <div class="updated" id="updated"></div>
+    <div class="error" id="error"></div>
+    <button class="refresh" id="refreshBtn">Refresh</button>
+  </main>
+
+  <footer>Data from xaus.com &middot; indicative price, not a tradable quote</footer>
+</div>
+
+<script>
+  // This is the free API endpoint we're asking for data.
+  // No signup or key needed - it just returns JSON when we ask.
+  const API_URL = "https://xaus.com/api/v1/spot";
+
+  const priceEl = document.getElementById("price");
+  const updatedEl = document.getElementById("updated");
+  const errorEl = document.getElementById("error");
+  const refreshBtn = document.getElementById("refreshBtn");
+
+  // "async function" lets us use "await" to pause until
+  // the network request finishes, instead of dealing with callbacks.
+  async function fetchSilverPrice() {
+    refreshBtn.disabled = true;
+    refreshBtn.textContent = "Loading...";
+    errorEl.textContent = "";
+
+    try {
+      // fetch() sends the request out over the internet.
+      const response = await fetch(API_URL);
+
+      if (!response.ok) {
+        throw new Error("Server responded with an error");
+      }
+
+      // .json() turns the raw response into a JavaScript object we can read.
+      const data = await response.json();
+
+      const price = data.silver_usd_oz;
+      priceEl.innerHTML = "$" + price.toFixed(2) + '<span class="unit">per troy oz</span>';
+
+      const time = new Date(data.updated_at);
+      updatedEl.textContent = "Updated " + time.toLocaleTimeString();
+
+    } catch (err) {
+      errorEl.textContent = "Couldn't fetch the price. Check your internet connection and try again.";
+    } finally {
+      refreshBtn.disabled = false;
+      refreshBtn.textContent = "Refresh";
+    }
+  }
+
+  refreshBtn.addEventListener("click", fetchSilverPrice);
+
+  // Fetch immediately when the app first loads.
+  fetchSilverPrice();
+</script>
+
+</body>
+</html>
